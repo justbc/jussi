@@ -4,6 +4,8 @@ import logging
 import zlib
 from io import BytesIO
 
+from sanic.response import StreamingHTTPResponse
+
 from jussi.typedefs import HTTPRequest
 from jussi.typedefs import HTTPResponse
 
@@ -58,6 +60,9 @@ async def decompress_request(request: HTTPRequest) -> None:
 @handle_middleware_exceptions
 async def compress_response(request: HTTPRequest,
                             response: HTTPResponse) -> HTTPResponse:
+    if isinstance(response, StreamingHTTPResponse):
+        return
+
     accept_encoding = request.headers.get('Accept-Encoding', '')
     content_length = len(response.body)
     content_type = response.content_type

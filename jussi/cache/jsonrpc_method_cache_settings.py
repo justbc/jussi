@@ -91,7 +91,12 @@ METHOD_SETTINGS = (
     ('sbds', 10),
 
     # yo default
-    ('yo', TTL.NO_CACHE))
+    ('yo', TTL.NO_CACHE),
+
+    # jussi default
+    ('jussi', TTL.NO_CACHE)
+
+)
 
 TTLS = pygtrie.StringTrie(METHOD_SETTINGS, separator='.')
 
