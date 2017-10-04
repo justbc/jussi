@@ -108,16 +108,17 @@ async def fetch_ws(sanic_http_request: HTTPRequest,
 
             upstream_response = await conn.recv()
             upstream_json = ujson.loads(upstream_response)
-            assert upstream_json .get('id') == upstream_json['id'], \
-                f'{upstream_json .get("id")} should be {upstream_json ["id"]}'
+            assert upstream_json.get('id') == upstream_json['id'], \
+                f'{upstream_json.get("id")} should be {upstream_json ["id"]}'
             upstream_json['id'] = jsonrpc_request['id']
             return upstream_json
-
         except AssertionError as e:
             logger.error(pool.get_connection_info(conn))
             await pool.terminate_connection(conn)
             raise UpstreamResponseError(sanic_request=sanic_http_request,
                                         exception=e)
+        except Exception as e:
+            logger.exception('fetch_ws exception')
         finally:
             pool.release(conn)
 
