@@ -89,8 +89,8 @@ async def healthcheck(sanic_http_request: HTTPRequest) -> HTTPResponse:
     })
 
 
-async def get_ws(*args):
-    return await websockets.connect(*args)
+async def get_ws(url):
+    return await websockets.connect(url)
 
 
 # pylint: disable=no-value-for-parameter
