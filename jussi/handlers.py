@@ -90,7 +90,8 @@ async def healthcheck(sanic_http_request: HTTPRequest) -> HTTPResponse:
 
 
 async def get_ws(url):
-    return await websockets.connect(url)
+    async with websockets.connect(url) as conn:
+        yield conn
 
 
 # pylint: disable=no-value-for-parameter
@@ -106,24 +107,21 @@ async def fetch_ws(sanic_http_request: HTTPRequest,
     upstream_request['id'] = random.getrandbits(32)
 
     with async_timeout.timeout(args.upstream_websocket_timeout):
-        conn = None
+
         try:
-            conn = await get_ws(args.upstream_steemd_url)
-            serialized_request = ujson.dumps(jsonrpc_request).encode()
-            logger.debug(f'{serialized_request}-->upstream')
-            await conn.send(serialized_request)
-            upstream_response = await conn.recv()
-            logger.debug(f'upstream-->{upstream_response}')
-            upstream_json = ujson.loads(upstream_response)
-            assert upstream_json.get('id') == upstream_json['id'], \
-                f'{upstream_json.get("id")} should be {upstream_json ["id"]}'
-            upstream_json['id'] = jsonrpc_request['id']
-            return upstream_json
+            async with websockets.connect(args.upstream_steemd_url) as conn:
+                serialized_request = ujson.dumps(jsonrpc_request).encode()
+                logger.debug(f'{serialized_request}-->upstream')
+                await conn.send(serialized_request)
+                upstream_response = await conn.recv()
+                logger.debug(f'upstream-->{upstream_response}')
+                upstream_json = ujson.loads(upstream_response)
+                assert upstream_json.get('id') == upstream_json['id'], \
+                    f'{upstream_json.get("id")} should be {upstream_json ["id"]}'
+                upstream_json['id'] = jsonrpc_request['id']
+                return upstream_json
         except Exception:
             logger.exception('fetch_ws failed')
-        finally:
-            if conn:
-                conn.close()
 
 
 @async_retry(tries=3)

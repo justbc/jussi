@@ -802,19 +802,34 @@ def test_cli(app, loop, test_client):
     return loop.run_until_complete(test_client(app))
 
 
+class AsyncContextManagerMock(asynctest.MagicMock):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for key in ('aenter_return', 'aexit_return'):
+            setattr(self, key, kwargs[key] if key in kwargs else asynctest.MagicMock())
+
+    async def __aenter__(self):
+        return self.aenter_return
+
+    async def __aexit__(self, *args):
+        return self.aexit_return
+
+
 @pytest.fixture
 def mocked_app_test_cli(app, loop, test_client):
-
-    with asynctest.patch('jussi.handlers.get_ws') as mocked_connection:
-        mocked_ws_conn = asynctest.CoroutineMock()
-        mocked_ws_conn.send = asynctest.CoroutineMock()
-        mocked_ws_conn.send.return_value = None
-        mocked_ws_conn.recv = asynctest.CoroutineMock()
-        mocked_ws_conn.close = asynctest.CoroutineMock()
-        mocked_ws_conn.close_connection = asynctest.CoroutineMock()
-        mocked_ws_conn.worker_task = asynctest.MagicMock()
-        mocked_ws_conn.messages = asynctest.MagicMock()
-        mocked_connection.return_value = mocked_ws_conn
+    mocked_ws_conn = asynctest.CoroutineMock()
+    mocked_ws_conn.send = asynctest.CoroutineMock()
+    mocked_ws_conn.send.return_value = None
+    mocked_ws_conn.recv = asynctest.CoroutineMock()
+    mocked_ws_conn.close = asynctest.CoroutineMock()
+    mocked_ws_conn.close_connection = asynctest.CoroutineMock()
+    mocked_ws_conn.worker_task = asynctest.MagicMock()
+    mocked_ws_conn.messages = asynctest.MagicMock()
+    acmm = AsyncContextManagerMock(aenter_return=mocked_ws_conn)
+    with asynctest.patch('jussi.handlers.websockets.connect') as mocked_connection:
+        mocked_connection.return_value = acmm
         yield mocked_ws_conn, loop.run_until_complete(test_client(app))
 
 
