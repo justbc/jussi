@@ -6,11 +6,11 @@ import logging
 import random
 
 import async_timeout
+import websockets
 from sanic import response
 
 import ujson
 
-from .errors import UpstreamResponseError
 from .typedefs import BatchJsonRpcRequest
 from .typedefs import BatchJsonRpcResponse
 from .typedefs import HTTPRequest
@@ -89,38 +89,41 @@ async def healthcheck(sanic_http_request: HTTPRequest) -> HTTPResponse:
     })
 
 
+async def get_ws(*args):
+    return await websockets.connect(*args)
+
+
 # pylint: disable=no-value-for-parameter
 @async_retry(tries=3)
 @update_last_irreversible_block_num
 async def fetch_ws(sanic_http_request: HTTPRequest,
                    jsonrpc_request: SingleJsonRpcRequest
                    ) -> SingleJsonRpcResponse:
-    pool = sanic_http_request.app.config.websocket_pool
+    args = sanic_http_request.app.config.args
 
     upstream_request = {k: jsonrpc_request[k] for k in
                         {'jsonrpc', 'method', 'params'} if k in jsonrpc_request}
     upstream_request['id'] = random.getrandbits(32)
 
-    conn = await pool.acquire()
-    with async_timeout.timeout(2):
+    with async_timeout.timeout(args.upstream_websocket_timeout):
+        conn = None
         try:
-            await conn.send(ujson.dumps(jsonrpc_request).encode())
-
+            conn = await get_ws(args.upstream_steemd_url)
+            serialized_request = ujson.dumps(jsonrpc_request).encode()
+            logger.debug(f'{serialized_request}-->upstream')
+            await conn.send(serialized_request)
             upstream_response = await conn.recv()
+            logger.debug(f'upstream-->{upstream_response}')
             upstream_json = ujson.loads(upstream_response)
             assert upstream_json.get('id') == upstream_json['id'], \
                 f'{upstream_json.get("id")} should be {upstream_json ["id"]}'
             upstream_json['id'] = jsonrpc_request['id']
             return upstream_json
-        except AssertionError as e:
-            logger.error(pool.get_connection_info(conn))
-            await pool.terminate_connection(conn)
-            raise UpstreamResponseError(sanic_request=sanic_http_request,
-                                        exception=e)
-        except Exception as e:
-            logger.exception('fetch_ws exception')
+        except Exception:
+            logger.exception('fetch_ws failed')
         finally:
-            pool.release(conn)
+            if conn:
+                conn.close()
 
 
 @async_retry(tries=3)
@@ -136,7 +139,8 @@ async def fetch_http(sanic_http_request: HTTPRequest = None,
     upstream_request = {k: jsonrpc_request[k] for k in
                         {'jsonrpc', 'method', 'params'} if k in jsonrpc_request}
     upstream_request['id'] = random.getrandbits(32)
-    with async_timeout.timeout(2):
+    args = sanic_http_request.app.config.args
+    with async_timeout.timeout(args.upstream_http_timeout):
         async with session.post(url, json=upstream_request, headers=headers) as resp:
             upstream_response = await resp.json()
         upstream_response['id'] = jsonrpc_request['id']
