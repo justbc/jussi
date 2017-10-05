@@ -60,7 +60,7 @@ server_error = {
 async def test_validate_jsonrpc_request_middleware(mocked_app_test_cli,
                                                    jrpc_request, expected):
     mocked_ws_conn, test_cli = mocked_app_test_cli
-    mocked_ws_conn.recv.return_value = ujson.dumps(expected)
+    mocked_ws_conn.receive_json.return_value = expected
     response = await test_cli.post('/', json=jrpc_request)
 
     assert response.status == 200

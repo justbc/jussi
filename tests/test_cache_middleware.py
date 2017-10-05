@@ -35,7 +35,9 @@ async def test_cache_response_middleware(test_cli):
 
 async def test_mocked_cache_response_middleware(mocked_app_test_cli, mocker):
     mocked_ws_conn, test_cli = mocked_app_test_cli
-    mocked_ws_conn.recv.return_value = json.dumps(expected_response)
+    mocked_ws_conn.receive_json.return_value = expected_response
+    print(mocked_ws_conn)
+    print(mocked_ws_conn.receive_json)
     with mocker.patch('jussi.handlers.random', getrandbits=lambda x: 1) as mocked_rand:
 
         response = await test_cli.post('/', json=req)

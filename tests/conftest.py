@@ -820,15 +820,12 @@ class AsyncContextManagerMock(asynctest.MagicMock):
 @pytest.fixture
 def mocked_app_test_cli(app, loop, test_client):
     mocked_ws_conn = asynctest.CoroutineMock()
-    mocked_ws_conn.send = asynctest.CoroutineMock()
+    mocked_ws_conn.send_bytes = asynctest.CoroutineMock()
     mocked_ws_conn.send.return_value = None
-    mocked_ws_conn.recv = asynctest.CoroutineMock()
-    mocked_ws_conn.close = asynctest.CoroutineMock()
-    mocked_ws_conn.close_connection = asynctest.CoroutineMock()
-    mocked_ws_conn.worker_task = asynctest.MagicMock()
-    mocked_ws_conn.messages = asynctest.MagicMock()
+    #mocked_ws_conn.receive_json.ret = asynctest.CoroutineMock()
+
     acmm = AsyncContextManagerMock(aenter_return=mocked_ws_conn)
-    with asynctest.patch('jussi.handlers.websockets.connect') as mocked_connection:
+    with asynctest.patch('aiohttp.client.ClientSession.ws_connect') as mocked_connection:
         mocked_connection.return_value = acmm
         yield mocked_ws_conn, loop.run_until_complete(test_client(app))
 

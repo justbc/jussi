@@ -100,6 +100,7 @@ async def get_ws(url):
 async def fetch_ws(sanic_http_request: HTTPRequest,
                    jsonrpc_request: SingleJsonRpcRequest
                    ) -> SingleJsonRpcResponse:
+    session = sanic_http_request.app.config.aiohttp['session']
     args = sanic_http_request.app.config.args
 
     upstream_request = {k: jsonrpc_request[k] for k in
@@ -107,21 +108,17 @@ async def fetch_ws(sanic_http_request: HTTPRequest,
     upstream_request['id'] = random.getrandbits(32)
 
     with async_timeout.timeout(args.upstream_websocket_timeout):
-
-        try:
-            async with websockets.connect(args.upstream_steemd_url) as conn:
-                serialized_request = ujson.dumps(jsonrpc_request).encode()
-                logger.debug(f'{serialized_request}-->upstream')
-                await conn.send(serialized_request)
-                upstream_response = await conn.recv()
-                logger.debug(f'upstream-->{upstream_response}')
-                upstream_json = ujson.loads(upstream_response)
-                assert upstream_json.get('id') == upstream_json['id'], \
-                    f'{upstream_json.get("id")} should be {upstream_json ["id"]}'
-                upstream_json['id'] = jsonrpc_request['id']
-                return upstream_json
-        except Exception:
-            logger.exception('fetch_ws failed')
+        async with session.ws_connect(args.upstream_steemd_url, timeout=1) as conn:
+            serialized_request = ujson.dumps(jsonrpc_request).encode()
+            logger.debug(f'{serialized_request}-->upstream')
+            await conn.send_bytes(serialized_request)
+            upstream_json = await conn.receive_json()
+            logger.debug(f'upstream-->{upstream_json}')
+            #upstream_json = ujson.loads(upstream_response)
+            assert upstream_json.get('id') == upstream_json['id'], \
+                f'{upstream_json.get("id")} should be {upstream_json ["id"]}'
+            upstream_json['id'] = jsonrpc_request['id']
+            return upstream_json
 
 
 @async_retry(tries=3)

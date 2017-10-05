@@ -78,8 +78,7 @@ async def test_steemd_multi_format_requests(mocked_app_test_cli, jsonrpc_request
     with mocker.patch('jussi.handlers.random',
                       getrandbits=lambda x: 1) as mocked_rand:
         mocked_ws_conn, test_cli = mocked_app_test_cli
-        mocked_ws_conn.recv.return_value = json.dumps(
-            correct_get_block_1000_response)
+        mocked_ws_conn.receive_json.return_value = correct_get_block_1000_response
         response = await test_cli.post('/', json=jsonrpc_request)
         assert response.status == 200
         assert response.headers['Content-Type'] == 'application/json'
@@ -95,7 +94,7 @@ async def test_mocked_steemd_calls(mocked_app_test_cli, steemd_jrpc_response_val
     with mocker.patch('jussi.handlers.random', getrandbits=lambda x: jrpc_req['id']) as mocked_rand:
 
         mocked_ws_conn, test_cli = mocked_app_test_cli
-        mocked_ws_conn.recv.return_value = json.dumps(jrpc_resp)
+        mocked_ws_conn.receive_json.return_value = jrpc_resp
 
         response = await test_cli.post('/', json=jrpc_req)
         assert response.status == 200

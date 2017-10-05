@@ -54,7 +54,7 @@ async def test_upstream_error_responses(mocker, mocked_app_test_cli, jsonrpc_req
                                         expected):
     with mocker.patch('jussi.handlers.random', getrandbits=lambda x: 1) as mocked_rand:
         mocked_ws_conn, test_cli = mocked_app_test_cli
-        mocked_ws_conn.recv.return_value = json.dumps(expected)
+        mocked_ws_conn.receive_json.return_value = expected
         response = await test_cli.post('/', json=jsonrpc_request)
         assert response.status == 200
         assert response.headers['Content-Type'] == 'application/json'
