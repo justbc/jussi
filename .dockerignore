@@ -50,3 +50,4 @@ deploy/
 .cache/
 perf/
 *.log
+.elasticbeanstalk/
