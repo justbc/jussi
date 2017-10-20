@@ -11,6 +11,7 @@ from sanic import response
 import ujson
 
 from .errors import UpstreamResponseError
+from .errors import UpstreamRequestTimeourError
 from .typedefs import BatchJsonRpcRequest
 from .typedefs import BatchJsonRpcResponse
 from .typedefs import HTTPRequest
@@ -145,6 +146,9 @@ async def fetch_ws(sanic_http_request: HTTPRequest,
             await pool.terminate_connection(conn)
             raise UpstreamResponseError(sanic_request=sanic_http_request,
                                         exception=e)
+        except asyncio.TimeoutError as e:
+            raise UpstreamRequestTimeourError(sanic_request=sanic_http_request,
+                                              exception=e)
         except Exception as e:
             logger.error(f'fetch_ws failed: {e}')
             await pool.terminate_connection(conn)

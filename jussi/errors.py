@@ -36,7 +36,7 @@ def setup_error_handlers(app: WebApp) -> WebApp:
         # pylint: disable=unused-argument
         if not request:
             return None
-        return RequestTimeourError(sanic_request=request).to_sanic_response()
+        return UpstreamRequestTimeourError(sanic_request=request).to_sanic_response()
 
     # pylint: disable=unused-argument
     @app.exception(JsonRpcError)
@@ -261,7 +261,7 @@ class ServerError(JsonRpcError):
     message = 'Server error'
 
 
-class RequestTimeourError(JsonRpcError):
+class UpstreamRequestTimeourError(JsonRpcError):
     code = 1000
     message = 'Request Timeout'
 
