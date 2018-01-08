@@ -31,6 +31,7 @@ def setup_listeners(app: WebApp) -> WebApp:
             'sbds_default': args.upstream_sbds_url,
             'steemd_default': args.upstream_steemd_url,
             'steemd_broadcast': args.upstream_steemd_broadcast_url,
+            'steemd_ahnode': args.upstream_steemd_ahnode_url,
             'yo_default': args.upstream_yo_url,
 
         }

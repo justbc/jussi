@@ -24,6 +24,8 @@ ENV JUSSI_HIVEMIND_HTTP_URL https://hivemind.steemitdev.com
 ENV JUSSI_OVERSEER_HTTP_URL https://overseer.steemitdev.com
 ENV JUSSI_SBDS_HTTP_URL https://sbds.steemitdev.com
 ENV JUSSI_STEEMD_WS_URL wss://steemd.steemitdev.com
+ENV JUSSI_STEEMD_WS_BROADCAST_URL wss://steemd.steemitdev.com
+ENV JUSSI_STEEMD_WS_AHNODE_URL wss://steemd.steemitdev.com
 ENV JUSSI_YO_HTTP_URL https://yo.steemitdev.com
 
 # all nginx env vars must also be changed in service/nginx/nginx.conf

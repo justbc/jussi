@@ -30,6 +30,8 @@ URL_SETTINGS = (
     # steemd default
     ('steemd', 'steemd_default'),
     ('steemd.network_broadcast_api.broadcast_transaction_synchronous', 'steemd_broadcast'),
+    ("steemd.database_api.get_state.params=['/transfers']", 'steemd_ahnode'),
+    ('steemd.database_api.get_account_history', 'steemd_ahnode'),
 
     # yo default
     ('yo', 'yo_default')
