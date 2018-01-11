@@ -6,6 +6,7 @@ import logging
 import time
 
 import async_timeout
+from aiohttp import ClientConnectorError
 from sanic import response
 
 import ujson
@@ -121,10 +122,16 @@ async def fetch_http(sanic_http_request: HTTPRequest,
     upstream_request = jsonrpc_request.to_upstream_request(upstream_id, as_json=False)
 
     with async_timeout.timeout(jsonrpc_request.upstream.timeout):
-        async with session.post(jsonrpc_request.upstream.url,
-                                json=upstream_request) as resp:
-            upstream_response = await resp.json()
-
+        try:
+            async with session.post(jsonrpc_request.upstream.url,
+                                    json=upstream_request) as resp:
+                upstream_response = await resp.json()
+        except ClientConnectorError as e:
+            logger.error('bad/missing upstream url: %s method:%s path:%s',
+                         jsonrpc_request.upstream.url,
+                         sanic_http_request.method,
+                         sanic_http_request.path)
+            raise e
         del upstream_response['id']
         if 'id' in jsonrpc_request:
             upstream_response['id'] = jsonrpc_request.id
@@ -138,22 +145,23 @@ async def dispatch_single(sanic_http_request: HTTPRequest,
 
     if batch_index is None:
         batch_index = 0
+    url = jsonrpc_request.upstream.url
 
     # pylint: disable=unexpected-keyword-arg
-    if jsonrpc_request.upstream.url.startswith('ws'):
+    if url.startswith('ws'):
         json_response = await fetch_ws(
             sanic_http_request,
             jsonrpc_request,
             batch_index)
-    elif jsonrpc_request.upstream.url.startswith('http'):
+        return json_response
+    elif url.startswith('http'):
         json_response = await fetch_http(
             sanic_http_request,
             jsonrpc_request,
             batch_index)
+        return json_response
     else:
         raise ValueError(f'Bad url {jsonrpc_request.upstream.url}')
-
-    return json_response
 
 
 async def dispatch_batch(sanic_http_request: HTTPRequest,
