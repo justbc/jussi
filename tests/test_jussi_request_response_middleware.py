@@ -32,7 +32,7 @@ def test_request_id_in_response_headers():
     def handler(r):
         return sanic.response.text('post')
 
-    @app.post('/get')
+    @app.get('/get')
     def handler(r):
         return sanic.response.text('get')
 
@@ -54,7 +54,7 @@ def test_response_time_in_response_headers():
     def handler(r):
         return sanic.response.text('post')
 
-    @app.post('/get')
+    @app.get('/get')
     def handler(r):
         return sanic.response.text('get')
 
@@ -67,8 +67,7 @@ def test_response_time_in_response_headers():
     assert float(response.headers['x-jussi-response-time']) > 0
 
     _, response = app.test_client.get('/get')
-    assert 'x-jussi-response-time' in response.headers
-    assert float(response.headers['x-jussi-response-time']) > 0
+    assert 'x-jussi-response-time' not in response.headers
 
 
 def test_urn_parts_in_response_headers():
@@ -78,7 +77,7 @@ def test_urn_parts_in_response_headers():
     def handler(r):
         return sanic.response.text('post')
 
-    @app.post('/get')
+    @app.get('/get')
     def handler(r):
         return sanic.response.text('get')
 
@@ -109,7 +108,7 @@ def test_urn_parts_not_in_batch_response_headers():
     def handler(r):
         return sanic.response.text('post')
 
-    @app.post('/get')
+    @app.get('/get')
     def handler(r):
         return sanic.response.text('get')
 
@@ -132,7 +131,7 @@ def test_urn_parts_not_in_get_response_headers():
     def handler(r):
         return sanic.response.text('post')
 
-    @app.post('/get')
+    @app.get('/get')
     def handler(r):
         return sanic.response.text('get')
 

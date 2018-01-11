@@ -8,6 +8,7 @@ from ..errors import handle_middleware_exceptions
 from ..request import JussiJSONRPCRequest
 from ..typedefs import HTTPRequest
 from ..typedefs import HTTPResponse
+from ..utils import async_include_methods
 
 logger = logging.getLogger(__name__)
 request_logger = logging.getLogger('jussi_request')
@@ -15,6 +16,7 @@ request_logger = logging.getLogger('jussi_request')
 REQUEST_ID_TO_INT_TRANSLATE_TABLE = mt = str.maketrans('', '', '-.')
 
 
+@async_include_methods(include_http_methods=('POST',))
 @handle_middleware_exceptions
 async def add_jussi_request_id(request: HTTPRequest) -> None:
     try:
@@ -31,6 +33,7 @@ async def add_jussi_request_id(request: HTTPRequest) -> None:
     request['timing'] = time.perf_counter()
 
 
+@async_include_methods(include_http_methods=('POST',))
 @handle_middleware_exceptions
 async def convert_to_jussi_request(request: HTTPRequest) -> None:
     # pylint: disable=no-member
@@ -54,17 +57,23 @@ async def convert_to_jussi_request(request: HTTPRequest) -> None:
 @handle_middleware_exceptions
 async def finalize_jussi_response(request: HTTPRequest,
                                   response: HTTPResponse) -> None:
-    jussi_request_id = request.headers.get('x-jussi-request-id')
+    try:
+        jussi_request_id = request.headers.get('x-jussi-request-id')
+        response.headers['x-jussi-request-id'] = jussi_request_id
+    except Exception:
+        logger.warning('failed to add x-jussi-request-id')
     # pylint: disable=bare-except
-    if request.method == 'POST':
-        try:
+    try:
+        if request.method == 'POST':
             response.headers['x-jussi-namespace'] = request.json.urn.namespace
             response.headers['x-jussi-api'] = request.json.urn.api
             response.headers['x-jussi-method'] = request.json.urn.method
             response.headers['x-jussi-params'] = reprlib.repr(request.json.urn.params)
-        except BaseException as e:
-            logger.info(e)
+    except BaseException as e:
+        logger.warning(e)
 
-    request_elapsed = time.perf_counter() - request['timing']
-    response.headers['x-jussi-request-id'] = jussi_request_id
-    response.headers['x-jussi-response-time'] = request_elapsed
+    try:
+        request_elapsed = time.perf_counter() - request['timing']
+        response.headers['x-jussi-response-time'] = request_elapsed
+    except Exception:
+        logger.warning('failed to add x-jussi-response-time')

@@ -69,7 +69,7 @@ async def handle_middleware_exceptions(call):
     try:
         return await call()
     except Exception as e:
-        logger.error(f'handling middlware error: {e}')
+        logger.exception(f'handling middlware error')
         # pylint: disable=no-member
         if isinstance(e, JsonRpcError):
             return e.to_sanic_response()

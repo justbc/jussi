@@ -38,6 +38,35 @@ def async_exclude_methods(
     return f
 
 
+def async_include_methods(
+        middleware_func: Optional[Callable] = None,
+        include_http_methods: Tuple[str] = None) -> Optional[Callable]:
+    """Include specified HTTP methods from middleware
+
+    Args:
+        middleware_func:
+        exclude_http_methods:
+
+    Returns:
+
+    """
+    if middleware_func is None:
+        return functools.partial(
+            async_include_methods, include_http_methods=include_http_methods)
+
+    @functools.wraps(middleware_func)
+    async def f(*args, **kwargs) -> Optional[HTTPResponse]:
+        try:
+            request = args[0]
+            if request.method not in include_http_methods:
+                return None
+            return await middleware_func(*args, **kwargs)
+        except Exception:
+            logger.exception('async_include error')
+
+    return f
+
+
 def async_nowait_middleware(middleware_func: Callable) -> Callable:
     """Execute middlware function asynchronously but don't wait for result
 
