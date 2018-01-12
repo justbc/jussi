@@ -67,7 +67,7 @@ def test_response_time_in_response_headers():
     assert float(response.headers['x-jussi-response-time']) > 0
 
     _, response = app.test_client.get('/get')
-    assert 'x-jussi-response-time' not in response.headers
+    assert 'x-jussi-response-time' in response.headers
 
 
 def test_urn_parts_in_response_headers():

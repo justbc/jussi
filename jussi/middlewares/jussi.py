@@ -16,7 +16,7 @@ request_logger = logging.getLogger('jussi_request')
 REQUEST_ID_TO_INT_TRANSLATE_TABLE = mt = str.maketrans('', '', '-.')
 
 
-@async_include_methods(include_http_methods=('POST',))
+@async_include_methods(include_http_methods=('POST', 'GET', 'OPTIONS'))
 @handle_middleware_exceptions
 async def add_jussi_request_id(request: HTTPRequest) -> None:
     try:
@@ -54,6 +54,7 @@ async def convert_to_jussi_request(request: HTTPRequest) -> None:
         logger.exception('error adding info to request', extra=dict(request=request))
 
 
+@async_include_methods(include_http_methods=('POST', 'GET', 'OPTIONS'))
 @handle_middleware_exceptions
 async def finalize_jussi_response(request: HTTPRequest,
                                   response: HTTPResponse) -> None:
