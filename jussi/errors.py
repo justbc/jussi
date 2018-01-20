@@ -237,3 +237,13 @@ class UpstreamResponseError(JsonRpcError):
 class InvalidNamespaceError(JsonRpcError):
     code = 1200
     message = 'Invalid JSONRPC method namespace {namespace}'
+
+
+class InvalidUpstreamHost(JsonRpcError):
+    code = 1300
+    message = 'Invalid/unresolvable upstream hostname {url}'
+
+
+class InvalidUpstreamURL(JsonRpcError):
+    code = 1300
+    message = 'Invalid/unhealthy upstream {url} : {reason}'
