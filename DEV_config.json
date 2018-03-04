@@ -3,7 +3,7 @@
         "name": "steemd",
         "translate_to_appbase": false,
         "urls": [
-            ["steemd", "ws://159.89.228.236:9876"]
+            ["steemd", "wss://159.89.228.236"]
         ],
         "ttls": [
             ["steemd", 3]
