@@ -3,7 +3,7 @@
         "name": "steemd",
         "translate_to_appbase": false,
         "urls": [
-            ["steemd", "wss://159.89.228.236"]
+            ["steemd", "wss://demo.predictev.com"]
         ],
         "ttls": [
             ["steemd", 3]
